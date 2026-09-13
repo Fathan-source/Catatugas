@@ -3,6 +3,7 @@ const HARI_SINGKAT = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const API_BASE = "/api/tasks";
 const LS_KEY = "catatugas.v1";
+const SEED_KEY = "catatugas.seeded.v1";
 
 const el = (id) => document.getElementById(id);
 const todayDay = el("todayDay");
@@ -463,7 +464,9 @@ if(dlgHapus){
 
 function init(){
   tasks = loadLocal();
-  if(!tasks.length){
+  let seeded = false;
+  try{ seeded = localStorage.getItem(SEED_KEY) === "1"; }catch{ seeded = true; }
+  if(!tasks.length && !seeded){
     const t = todayISO();
     const d = new Date();
     const d2 = new Date(d); d2.setDate(d.getDate()+1);
@@ -475,6 +478,7 @@ function init(){
     ];
     saveLocal();
   }
+  try{ localStorage.setItem(SEED_KEY, "1"); }catch{}
   inTanggal.value = todayISO();
   renderClock();
   setInterval(renderClock, 1000);

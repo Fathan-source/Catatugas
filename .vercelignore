@@ -1,0 +1,11 @@
+node_modules
+.git
+.vercel
+.env
+server.js
+db.js
+schema.sql
+package.json
+package-lock.json
+.gitignore
+README.md

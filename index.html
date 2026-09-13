@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatugas, Pencatatan Tugas Harian dengan Hari dan Tanggal</title>
+<meta name="description" content="Catatugas membantu mencatat tugas harian lengkap dengan hari, tanggal, jam, prioritas, dan status. Data tersimpan otomatis di perangkat dan siap disinkron ke MySQL.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:3000; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E7C5B'/%3E%3Cpath d='M9 16.5l5 5L23 11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#daftar">Lewati ke daftar tugas</a>
+
+<header class="topbar">
+  <div class="wrap topbar_in">
+    <div class="brand">
+      <span class="brand_mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="7" fill="#0E7C5B"/><path d="M9 16.5l5 5L23 11" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="brand_text">
+        <span class="brand_name">Catatugas</span>
+        <span class="brand_sub">Tugas harian rapi menurut hari dan tanggal</span>
+      </span>
+    </div>
+    <div class="today" aria-live="polite">
+      <span class="today_day" id="todayDay">Memuat hari</span>
+      <span class="today_date mono" id="todayDate">Memuat tanggal</span>
+      <span class="today_clock mono" id="todayClock" title="Jam perangkat">00:00</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap layout">
+  <section class="main" aria-label="Daftar dan kelola tugas">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="Cari judul atau catatan" autocomplete="off" aria-label="Cari tugas">
+      </div>
+      <div class="chips" role="group" aria-label="Filter status">
+        <button class="chip is_on" data-filter="semua" type="button">Semua</button>
+        <button class="chip" data-filter="hari_ini" type="button">Hari ini</button>
+        <button class="chip" data-filter="mendatang" type="button">Mendatang</button>
+        <button class="chip" data-filter="terlewat" type="button">Terlewat</button>
+        <button class="chip" data-filter="selesai" type="button">Selesai</button>
+      </div>
+      <div class="toolbar_row">
+        <label class="mini">Prioritas
+          <select id="fPrioritas">
+            <option value="semua">Semua prioritas</option>
+            <option value="tinggi">Tinggi</option>
+            <option value="sedang">Sedang</option>
+            <option value="rendah">Rendah</option>
+          </select>
+        </label>
+        <label class="mini">Urutkan
+          <select id="sortir">
+            <option value="tanggal">Tanggal terdekat</option>
+            <option value="prioritas">Prioritas tertinggi</option>
+            <option value="dibuat">Terbaru dibuat</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="week" id="weekStrip" aria-label="Tugas tujuh hari ke depan"></div>
+
+    <div class="stats" aria-label="Ringkasan tugas">
+      <div class="stat"><span class="stat_n mono" id="stTotal">0</span><span class="stat_l">Total tugas</span></div>
+      <div class="stat"><span class="stat_n mono" id="stAktif">0</span><span class="stat_l">Aktif</span></div>
+      <div class="stat"><span class="stat_n mono" id="stSelesai">0</span><span class="stat_l">Selesai</span></div>
+      <div class="stat"><span class="stat_n mono" id="stTerlewat">0</span><span class="stat_l">Terlewat</span></div>
+    </div>
+
+    <div id="daftar" class="groups" aria-live="polite"></div>
+
+    <div class="empty hidden" id="emptyState">
+      <div class="empty_card">
+        <p class="empty_t">Belum ada tugas pada filter ini</p>
+        <p class="empty_d">Tambahkan tugas pertama lewat formulir di samping. Isi judul, pilih tanggal, dan biarkan hari terisi otomatis dari tanggal yang kamu pilih.</p>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side" aria-label="Formulir tambah tugas">
+    <form id="formTugas" class="card form" novalidate>
+      <h1 class="form_t">Catat tugas baru</h1>
+      <p class="form_d">Hari dihitung otomatis dari tanggal. Kamu cukup fokus pada isi tugas dan tenggatnya.</p>
+
+      <label class="field">Judul tugas
+        <input id="inJudul" name="judul" type="text" maxlength="120" required placeholder="Contoh: Siapkan laporan mingguan" autocomplete="off">
+        <span class="hint">Wajib diisi, maksimal 120 karakter</span>
+      </label>
+
+      <label class="field">Catatan
+        <textarea id="inCatatan" name="catatan" rows="3" maxlength="500" placeholder="Detail singkat, lokasi, atau tautan terkait"></textarea>
+      </label>
+
+      <div class="grid2">
+        <label class="field">Tanggal
+          <input id="inTanggal" name="tanggal" type="date" required>
+        </label>
+        <label class="field">Jam
+          <input id="inJam" name="jam" type="time" value="09:00">
+        </label>
+      </div>
+
+      <div class="dayline" aria-live="polite">
+        <span class="dayline_l">Hari terpilih</span>
+        <span class="dayline_v mono" id="hariOtomatis">Pilih tanggal dulu</span>
+      </div>
+
+      <div class="grid2">
+        <label class="field">Prioritas
+          <select id="inPrioritas" name="prioritas">
+            <option value="sedang">Sedang</option>
+            <option value="tinggi">Tinggi</option>
+            <option value="rendah">Rendah</option>
+          </select>
+        </label>
+        <label class="field">Kategori
+          <select id="inKategori" name="kategori">
+            <option value="kerja">Kerja</option>
+            <option value="kuliah">Kuliah</option>
+            <option value="pribadi">Pribadi</option>
+            <option value="keluarga">Keluarga</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </label>
+      </div>
+
+      <p class="form_err hidden" id="formErr" role="alert"></p>
+
+      <div class="form_act">
+        <button class="btn primary" type="submit" id="btnSimpan">Simpan tugas</button>
+        <button class="btn ghost hidden" type="button" id="btnBatal">Batal ubah</button>
+      </div>
+      <p class="form_note">Data tersimpan otomatis di perangkat ini.</p>
+    </form>
+
+    <div class="card side_card">
+      <h2 class="side_t">Cara cepat memakai aplikasi ini</h2>
+      <ol class="steps">
+        <li>Isi judul lalu pilih tanggal tenggat</li>
+        <li>Periksa hari otomatis yang muncul</li>
+        <li>Tekan Simpan tugas dan pantau dari strip tujuh hari</li>
+      </ol>
+    </div>
+  </aside>
+</main>
+
+<footer class="wrap foot">
+  <span>Catatugas menyimpan data secara lokal lebih dulu agar tetap bisa dipakai luring</span>
+  <span class="mono" id="footCount">0 tugas tersimpan</span>
+</footer>
+
+<div class="toast hidden" id="toast" role="status"></div>
+
+<dialog id="dlgHapus" class="dlg">
+  <form method="dialog" class="dlg_in">
+    <h2 class="dlg_t">Hapus tugas ini</h2>
+    <p class="dlg_d" id="dlgText">Tindakan ini tidak bisa dibatalkan.</p>
+    <div class="dlg_act">
+      <button class="btn ghost" value="batal" type="submit">Batal</button>
+      <button class="btn danger" value="hapus" type="submit" id="btnHapusYa">Hapus</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="script.js" defer></script>
+</body>
+</html>

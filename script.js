@@ -1,7 +1,7 @@
 const HARI = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
 const HARI_SINGKAT = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-const API_BASE = "http://localhost:3000/api/tasks";
+const API_BASE = "/api/tasks";
 const LS_KEY = "catatugas.v1";
 
 const el = (id) => document.getElementById(id);

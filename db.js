@@ -8,8 +8,9 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "catatugas_db",
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  connectionLimit: Number(process.env.DB_CONN_LIMIT || (process.env.VERCEL ? 2 : 10)),
+  queueLimit: 0,
+  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : undefined
 });
 
 async function query(sql, params){

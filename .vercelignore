@@ -2,10 +2,12 @@ node_modules
 .git
 .vercel
 .env
+.env.example
+.gitignore
+README.md
 server.js
 db.js
 schema.sql
+api
 package.json
 package-lock.json
-.gitignore
-README.md

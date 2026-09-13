@@ -5,9 +5,23 @@ const cors = require("cors");
 const db = require("./db");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3000);
 
-app.use(cors({ origin: ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173"], maxAge: 86400 }));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:5173"
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    if (/\.vercel\.app$/.test(new URL(origin).hostname || "")) return cb(null, true);
+    return cb(null, false);
+  },
+  maxAge: 86400
+}));
 app.use(express.json({ limit: "32kb" }));
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -142,4 +156,8 @@ app.delete("/api/tasks/:id", async (req, res) => {
 
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-app.listen(PORT, () => console.log("Catatugas API aktif pada port " + PORT));
+module.exports = app;
+
+if (require.main === module && !process.env.VERCEL) {
+  app.listen(PORT, () => console.log("Catatugas API aktif pada port " + PORT));
+}
